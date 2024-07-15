@@ -91,3 +91,23 @@ def run(data, timerange)
   puts "5.01 to 6: #{between5and6}"
   puts "over 6: #{over6}"
 end
+
+def naive_baserate(data, timerange)
+  period = data.select { |row| timerange.cover?(row['datetime']) }.map { |row| row['kp'].to_f }
+  frequencies = period.each_slice(STEPS_WITHIN_WINDOW).map(&:max).group_by do |x|
+    if x <= 4
+      '4 or less'
+    elsif x <= 5
+      '4.01 to 5'
+    elsif x <= 6
+      '5.01 to 6'
+    else
+      'greater than 6'
+    end
+  end
+
+  chunks = frequencies.values.map(&:size).sum
+  frequencies.transform_values { |v| v.size.to_f / chunks }
+end
+
+p naive_baserate(data, ('2023-01-01'..))
