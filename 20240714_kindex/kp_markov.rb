@@ -72,21 +72,21 @@ def fract(results, range)
   results.select { |result| range.cover?(result.to_f) }.size.to_f / NUM_SIMS
 end
 
-under4 = fract(results, (0..4))
+zeroto4 = fract(results, (0..4))
 between4and6 = fract(results, (4.01..6))
 between4and5 = fract(results, (4.01..5))
 between5and6 = fract(results, (5.01..6))
 over6 = fract(results, (6.01..))
 
-raise 'oops' unless (under4 + between4and6 + over6) == 1
+raise 'oops' unless (zeroto4 + between4and6 + over6) == 1
 
 puts "current value: #{data[-1]['datetime']}, #{data[-1]['kp']}"
 puts "steps until window starts: #{steps_until_window}"
 puts "steps within window: #{STEPS_WITHIN_WINDOW}"
 
-puts "forecast:"
-puts "under 4: #{under4}"
-puts "4 to 6: #{between4and6}"
-puts "4 to 5: #{between4and5}"
-puts "5 to 6: #{between5and6}"
+puts 'forecast:'
+puts "zero to 4: #{zeroto4}"
+puts "4.01 to 6: #{between4and6}"
+puts "4.01 to 5: #{between4and5}"
+puts "5.01 to 6: #{between5and6}"
 puts "over 6: #{over6}"
