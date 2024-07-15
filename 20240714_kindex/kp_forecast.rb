@@ -52,41 +52,42 @@ def sample_next_value(transitions)
   end
 end
 
-last_datetime = data[-1]['datetime']
-last_value = data[-1]['kp']
+LAST_DATETIME = data[-1]['datetime']
+LAST_VALUE = data[-1]['kp']
 WINDOW_START = '2024-07-17T00:00Z'.freeze
 STEPS_WITHIN_WINDOW = 11 * 8 # 11 days times 8 readings per day
 NUM_SIMS = 100_000
-
-steps_until_window = ((DateTime.parse(WINDOW_START) - DateTime.parse(last_datetime)) * 8).to_i
-
-probabilities = transition_counts_to_probabilities(csv_to_transition_counts(data))
-
-num_steps = steps_until_window + STEPS_WITHIN_WINDOW
-
-results = NUM_SIMS.times.map do
-  follow_markov_chain(probabilities, last_value, num_steps).last(STEPS_WITHIN_WINDOW)
-end.map(&:max)
+STEPS_UNTIL_WINDOW = ((DateTime.parse(WINDOW_START) - DateTime.parse(LAST_DATETIME)) * 8).to_i
 
 def fract(results, range)
   results.select { |result| range.cover?(result.to_f) }.size.to_f / NUM_SIMS
 end
 
-zeroto4 = fract(results, (0..4))
-between4and6 = fract(results, (4.01..6))
-between4and5 = fract(results, (4.01..5))
-between5and6 = fract(results, (5.01..6))
-over6 = fract(results, (6.01..))
+def run(data, timerange)
+  probabilities = transition_counts_to_probabilities(csv_to_transition_counts(data.select { |row| timerange.cover?(row['datetime']) }))
+  num_steps = STEPS_UNTIL_WINDOW + STEPS_WITHIN_WINDOW
 
-raise 'oops' unless (zeroto4 + between4and6 + over6) == 1
+  results = NUM_SIMS.times.map do
+    follow_markov_chain(probabilities, LAST_VALUE, num_steps).last(STEPS_WITHIN_WINDOW)
+  end.map(&:max)
 
-puts "current value: #{data[-1]['datetime']}, #{data[-1]['kp']}"
-puts "steps until window starts: #{steps_until_window}"
-puts "steps within window: #{STEPS_WITHIN_WINDOW}"
 
-puts 'forecast:'
-puts "zero to 4: #{zeroto4}"
-puts "4.01 to 6: #{between4and6}"
-puts "4.01 to 5: #{between4and5}"
-puts "5.01 to 6: #{between5and6}"
-puts "over 6: #{over6}"
+  zeroto4 = fract(results, (0..4))
+  between4and6 = fract(results, (4.01..6))
+  between4and5 = fract(results, (4.01..5))
+  between5and6 = fract(results, (5.01..6))
+  over6 = fract(results, (6.01..))
+
+  raise 'oops' unless (zeroto4 + between4and6 + over6) == 1
+
+  puts "current value: #{data[-1]['datetime']}, #{data[-1]['kp']}"
+  puts "steps until window starts: #{STEPS_UNTIL_WINDOW}"
+  puts "steps within window: #{STEPS_WITHIN_WINDOW}"
+
+  puts 'forecast:'
+  puts "zero to 4: #{zeroto4}"
+  puts "4.01 to 6: #{between4and6}"
+  puts "4.01 to 5: #{between4and5}"
+  puts "5.01 to 6: #{between5and6}"
+  puts "over 6: #{over6}"
+end
