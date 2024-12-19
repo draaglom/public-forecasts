@@ -28,6 +28,13 @@ recent_data_aqis = recent_data['New Delhi']['monitors'][0]['aqiCat']
 
 recent_data_start_time_diff = (csv_end_datetime - recent_data_start_time).to_i / 3600
 
+# depending on timing, the CSV export might not actually overlap with the last 24h json
+if recent_data_start_time_diff < -1
+  raise 'data gap'
+elsif recent_data_start_time_diff == -1
+  recent_data_start_time_diff = 0
+end
+
 recent_data_hazardous = recent_data_aqis[recent_data_start_time_diff..-1].select { |aqi| aqi >= 6 }.size
 recent_data_elapsed = recent_data_aqis[recent_data_start_time_diff..-1].size
 
